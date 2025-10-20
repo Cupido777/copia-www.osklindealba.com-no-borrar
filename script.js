@@ -466,3 +466,86 @@ if ('serviceWorker' in navigator) {
     console.log('Service Worker listo para implementar');
   });
 }
+
+// ===== 🎵 AUDIO EN TARJETA "En Ti Confío Señor" =====
+(function() {
+  const projectCard = document.getElementById('project-en-ti-confio-senor');
+  const audio = document.getElementById('audio-en-ti-confio-senor');
+
+  if (projectCard && audio) {
+    let isPlayingByTouch = false;
+    let touchStartY = null;
+
+    // Desktop: al entrar con mouse o pen
+    projectCard.addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      }
+    });
+
+    // Desktop: al salir
+    projectCard.addEventListener('pointerleave', (e) => {
+      if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
+        audio.pause();
+        audio.currentTime = 0;
+        isPlayingByTouch = false;
+      }
+    });
+
+    // Mobile: tocar para reproducir
+    projectCard.addEventListener('touchstart', (e) => {
+      isPlayingByTouch = true;
+      touchStartY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }, { passive: true });
+
+    // Mobile: scroll → pausar
+    window.addEventListener('touchmove', (e) => {
+      if (!isPlayingByTouch || touchStartY === null) return;
+      const currentY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
+      if (currentY !== null && Math.abs(currentY - touchStartY) > 10) {
+        isPlayingByTouch = false;
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    }, { passive: true });
+
+    // Tocar fuera → pausar
+    document.addEventListener('touchstart', (e) => {
+      if (!projectCard.contains(e.target)) {
+        isPlayingByTouch = false;
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    }, { passive: true });
+
+    // Salir de vista → pausar
+    window.addEventListener('scroll', () => {
+      const rect = projectCard.getBoundingClientRect();
+      const completelyOutOfView = rect.bottom < 0 || rect.top > window.innerHeight;
+      if (completelyOutOfView) {
+        isPlayingByTouch = false;
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    }, { passive: true });
+
+    // Cambiar pestaña → pausar
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        isPlayingByTouch = false;
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    });
+
+    // Pérdida de foco ventana → pausar
+    window.addEventListener('blur', () => {
+      isPlayingByTouch = false;
+      audio.pause();
+      audio.currentTime = 0;
+    });
+  }
+})();
