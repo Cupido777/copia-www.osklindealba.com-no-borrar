@@ -12,6 +12,89 @@ function loadCriticalResources() {
   });
 }
 
+// === FUNCIÓN REUTILIZABLE PARA TARJETAS DE AUDIO (NUEVO) ===
+function initAudioCard(cardId, audioId) {
+  const projectCard = document.getElementById(cardId);
+  const audio = document.getElementById(audioId);
+
+  if (projectCard && audio) {
+    let isPlayingByTouch = false;
+    let touchStartY = null;
+
+    // Desktop: al entrar con mouse o pen
+    projectCard.addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      }
+    });
+
+    // Desktop: al salir
+    projectCard.addEventListener('pointerleave', (e) => {
+      if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
+        audio.pause();
+        audio.currentTime = 0;
+        isPlayingByTouch = false;
+      }
+    });
+
+    // Mobile: tocar para reproducir
+    projectCard.addEventListener('touchstart', (e) => {
+      isPlayingByTouch = true;
+      touchStartY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }, { passive: true });
+
+    // Mobile: scroll → pausar
+    window.addEventListener('touchmove', (e) => {
+      if (!isPlayingByTouch || touchStartY === null) return;
+      const currentY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
+      if (currentY !== null && Math.abs(currentY - touchStartY) > 10) {
+        isPlayingByTouch = false;
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    }, { passive: true });
+
+    // Tocar fuera → pausar
+    document.addEventListener('touchstart', (e) => {
+      if (!projectCard.contains(e.target)) {
+        isPlayingByTouch = false;
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    }, { passive: true });
+
+    // Salir de vista → pausar
+    window.addEventListener('scroll', () => {
+      const rect = projectCard.getBoundingClientRect();
+      const completelyOutOfView = rect.bottom < 0 || rect.top > window.innerHeight;
+      if (completelyOutOfView) {
+        isPlayingByTouch = false;
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    }, { passive: true });
+
+    // Cambiar pestaña → pausar
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        isPlayingByTouch = false;
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    });
+
+    // Pérdida de foco ventana → pausar
+    window.addEventListener('blur', () => {
+      isPlayingByTouch = false;
+      audio.pause();
+      audio.currentTime = 0;
+    });
+  }
+}
+
 // Optimizar event listeners
 function optimizeEventListeners() {
   // Usar event delegation para mejor performance
@@ -373,88 +456,10 @@ Este mensaje fue enviado desde el formulario de contacto de ODAM Producción Mus
   // Cambiar versículo cada 30 segundos automáticamente
   setInterval(displayVerse, 60000);
 
-  
-  // ===== 🎵 AUDIO EN TARJETA "Tú Me Sostendrás" (mejorado) =====
-  const projectCard = document.getElementById('project-tu-me-sostendras');
-  const audio = document.getElementById('audio-tu-me-sostendras');
-
-  if (projectCard && audio) {
-    let isPlayingByTouch = false;
-    let touchStartY = null;
-
-    // Pointer events para mouse/pen: entrar/salir
-    projectCard.addEventListener('pointerenter', (e) => {
-      if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
-      }
-    });
-
-    projectCard.addEventListener('pointerleave', (e) => {
-      if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
-        audio.pause();
-        audio.currentTime = 0;
-        isPlayingByTouch = false;
-      }
-    });
-
-    // Mobile: iniciar reproducción al tocar la tarjeta
-    projectCard.addEventListener('touchstart', (e) => {
-      // marca que fue iniciado por touch
-      isPlayingByTouch = true;
-      touchStartY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-    }, { passive: true });
-
-    // Si el usuario hace scroll/touchmove mientras escucha -> detener
-    window.addEventListener('touchmove', (e) => {
-      if (!isPlayingByTouch || touchStartY === null) return;
-      const currentY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
-      if (currentY !== null && Math.abs(currentY - touchStartY) > 10) {
-        // interpretamos esto como scroll/gesto -> pausar
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    }, { passive: true });
-
-    // Si el usuario toca fuera de la tarjeta -> pausar
-    document.addEventListener('touchstart', (e) => {
-      if (!projectCard.contains(e.target)) {
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    }, { passive: true });
-
-    // Scroll general: si la tarjeta sale completamente de la vista -> pausar
-    window.addEventListener('scroll', () => {
-      const rect = projectCard.getBoundingClientRect();
-      const completelyOutOfView = rect.bottom < 0 || rect.top > window.innerHeight;
-      if (completelyOutOfView) {
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    }, { passive: true });
-
-    // Cambiar de pestaña o minimizar -> pausar
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    });
-
-    // Pérdida de foco de la ventana -> pausar
-    window.addEventListener('blur', () => {
-      isPlayingByTouch = false;
-      audio.pause();
-      audio.currentTime = 0;
-    });
-  }
+  // ===== INICIALIZACIÓN DE TARJETAS DE AUDIO (REUTILIZABLE) =====
+  initAudioCard('project-tu-me-sostendras', 'audio-tu-me-sostendras');
+  initAudioCard('project-en-ti-confio-senor', 'audio-en-ti-confio-senor');
+  initAudioCard('project-el-diezmo-es-del-senor-version-bachata', 'audio-el-diezmo-es-del-senor-version-bachata');
 
   console.log('🎵 ODAM - Sitio optimizado cargado correctamente');
 });
@@ -466,170 +471,3 @@ if ('serviceWorker' in navigator) {
     console.log('Service Worker listo para implementar');
   });
 }
-
-// ===== 🎵 AUDIO EN TARJETA "En Ti Confío Señor" =====
-(function() {
-  const projectCard = document.getElementById('project-en-ti-confio-senor');
-  const audio = document.getElementById('audio-en-ti-confio-senor');
-
-  if (projectCard && audio) {
-    let isPlayingByTouch = false;
-    let touchStartY = null;
-
-    // Desktop: al entrar con mouse o pen
-    projectCard.addEventListener('pointerenter', (e) => {
-      if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
-      }
-    });
-
-    // Desktop: al salir
-    projectCard.addEventListener('pointerleave', (e) => {
-      if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
-        audio.pause();
-        audio.currentTime = 0;
-        isPlayingByTouch = false;
-      }
-    });
-
-    // Mobile: tocar para reproducir
-    projectCard.addEventListener('touchstart', (e) => {
-      isPlayingByTouch = true;
-      touchStartY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-    }, { passive: true });
-
-    // Mobile: scroll → pausar
-    window.addEventListener('touchmove', (e) => {
-      if (!isPlayingByTouch || touchStartY === null) return;
-      const currentY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
-      if (currentY !== null && Math.abs(currentY - touchStartY) > 10) {
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    }, { passive: true });
-
-    // Tocar fuera → pausar
-    document.addEventListener('touchstart', (e) => {
-      if (!projectCard.contains(e.target)) {
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    }, { passive: true });
-
-    // Salir de vista → pausar
-    window.addEventListener('scroll', () => {
-      const rect = projectCard.getBoundingClientRect();
-      const completelyOutOfView = rect.bottom < 0 || rect.top > window.innerHeight;
-      if (completelyOutOfView) {
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    }, { passive: true });
-
-    // Cambiar pestaña → pausar
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    });
-
-    // Pérdida de foco ventana → pausar
-    window.addEventListener('blur', () => {
-      isPlayingByTouch = false;
-      audio.pause();
-      audio.currentTime = 0;
-    });
-
-    // ===== 🎵 AUDIO EN TARJETA "El Diezmo Es Del Señor (Versión Bachata)" =====
-(function() {
-  const projectCard = document.getElementById('project-el-diezmo-es-del-senor-version-bachata');
-  const audio = document.getElementById('audio-el-diezmo-es-del-senor-version-bachata');
-
-  if (projectCard && audio) {
-    let isPlayingByTouch = false;
-    let touchStartY = null;
-
-    // Desktop: al entrar con mouse o pen
-    projectCard.addEventListener('pointerenter', (e) => {
-      if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
-      }
-    });
-
-    // Desktop: al salir
-    projectCard.addEventListener('pointerleave', (e) => {
-      if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
-        audio.pause();
-        audio.currentTime = 0;
-        isPlayingByTouch = false;
-      }
-    });
-
-    // Mobile: tocar para reproducir
-    projectCard.addEventListener('touchstart', (e) => {
-      isPlayingByTouch = true;
-      touchStartY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-    }, { passive: true });
-
-    // Mobile: scroll → pausar
-    window.addEventListener('touchmove', (e) => {
-      if (!isPlayingByTouch || touchStartY === null) return;
-      const currentY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
-      if (currentY !== null && Math.abs(currentY - touchStartY) > 10) {
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    }, { passive: true });
-
-    // Tocar fuera → pausar
-    document.addEventListener('touchstart', (e) => {
-      if (!projectCard.contains(e.target)) {
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    }, { passive: true });
-
-    // Salir de vista → pausar
-    window.addEventListener('scroll', () => {
-      const rect = projectCard.getBoundingClientRect();
-      const completelyOutOfView = rect.bottom < 0 || rect.top > window.innerHeight;
-      if (completelyOutOfView) {
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    }, { passive: true });
-
-    // Cambiar pestaña → pausar
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        isPlayingByTouch = false;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    });
-
-    // Pérdida de foco ventana → pausar
-    window.addEventListener('blur', () => {
-      isPlayingByTouch = false;
-      audio.pause();
-      audio.currentTime = 0;
-    });
-  }
-})();
-
-  }
-})();
