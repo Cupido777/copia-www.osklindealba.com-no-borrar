@@ -460,6 +460,7 @@ Este mensaje fue enviado desde el formulario de contacto de ODAM Producción Mus
   initAudioCard('project-tu-me-sostendras', 'audio-tu-me-sostendras');
   initAudioCard('project-en-ti-confio-senor', 'audio-en-ti-confio-senor');
   initAudioCard('project-el-diezmo-es-del-senor-version-bachata', 'audio-el-diezmo-es-del-senor-version-bachata');
+  initAudioCard('project-renovados-en-tu-voluntad', 'audio-renovados-en-tu-voluntad');
 
   console.log('🎵 ODAM - Sitio optimizado cargado correctamente');
 });
