@@ -461,7 +461,10 @@ Este mensaje fue enviado desde el formulario de contacto de ODAM Producción Mus
   initAudioCard('project-renovados-en-tu-voluntad', 'audio-renovados-en-tu-voluntad');
   initAudioCard('project-en-ti-confio-senor', 'audio-en-ti-confio-senor');
   initAudioCard('project-el-diezmo-es-del-senor-version-bachata', 'audio-el-diezmo-es-del-senor-version-bachata');
+  initAudioCard('project-jonas-y-el-gran-pez', 'audio-jonas-y-el-gran-pez');
+  initAudioCard('project-el-hijo-de-manoa', 'audio-el-hijo-de-manoa');
 
+  
   console.log('🎵 ODAM - Sitio optimizado cargado correctamente');
 });
 
