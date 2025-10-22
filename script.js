@@ -21,11 +21,67 @@ function initAudioCard(cardId, audioId) {
     let isPlayingByTouch = false;
     let touchStartY = null;
 
+    // Obtener elementos del reproductor mini
+    const audioPlayer = projectCard.querySelector('.audio-player-mini');
+    const playBtn = projectCard.querySelector('.audio-play-btn');
+    const progressBar = projectCard.querySelector('.audio-progress');
+    const audioTime = projectCard.querySelector('.audio-time');
+    const waveBars = projectCard.querySelectorAll('.wave-bar');
+
+    // Función para formatear el tiempo
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = Math.floor(seconds % 60);
+      return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+    }
+
+    // Actualizar progreso y tiempo
+    function updateProgress() {
+      const percent = (audio.currentTime / audio.duration) * 100;
+      progressBar.style.width = `${percent}%`;
+      audioTime.textContent = formatTime(audio.currentTime);
+    }
+
+    // Actualizar estado visual del reproductor
+    function updatePlayerState() {
+      if (audio.paused) {
+        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+        audioPlayer.classList.remove('playing');
+      } else {
+        playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        audioPlayer.classList.add('playing');
+      }
+    }
+
+    // Event listeners para el reproductor mini
+    playBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (audio.paused) {
+        audio.play().catch(() => {});
+      } else {
+        audio.pause();
+      }
+      updatePlayerState();
+    });
+
+    // Actualizar progreso continuamente
+    audio.addEventListener('timeupdate', updateProgress);
+
+    // Actualizar estado cuando el audio se reproduce o pausa
+    audio.addEventListener('play', updatePlayerState);
+    audio.addEventListener('pause', updatePlayerState);
+
+    // Inicializar duración cuando esté cargada
+    audio.addEventListener('loadedmetadata', () => {
+      updateProgress();
+    });
+
     // Desktop: al entrar con mouse o pen
     projectCard.addEventListener('pointerenter', (e) => {
       if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
         audio.currentTime = 0;
         audio.play().catch(() => {});
+        updatePlayerState();
       }
     });
 
@@ -35,6 +91,8 @@ function initAudioCard(cardId, audioId) {
         audio.pause();
         audio.currentTime = 0;
         isPlayingByTouch = false;
+        updatePlayerState();
+        updateProgress();
       }
     });
 
@@ -44,6 +102,7 @@ function initAudioCard(cardId, audioId) {
       touchStartY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
       audio.currentTime = 0;
       audio.play().catch(() => {});
+      updatePlayerState();
     }, { passive: true });
 
     // Mobile: scroll → pausar
@@ -54,6 +113,8 @@ function initAudioCard(cardId, audioId) {
         isPlayingByTouch = false;
         audio.pause();
         audio.currentTime = 0;
+        updatePlayerState();
+        updateProgress();
       }
     }, { passive: true });
 
@@ -63,6 +124,8 @@ function initAudioCard(cardId, audioId) {
         isPlayingByTouch = false;
         audio.pause();
         audio.currentTime = 0;
+        updatePlayerState();
+        updateProgress();
       }
     }, { passive: true });
 
@@ -74,6 +137,8 @@ function initAudioCard(cardId, audioId) {
         isPlayingByTouch = false;
         audio.pause();
         audio.currentTime = 0;
+        updatePlayerState();
+        updateProgress();
       }
     }, { passive: true });
 
@@ -83,6 +148,8 @@ function initAudioCard(cardId, audioId) {
         isPlayingByTouch = false;
         audio.pause();
         audio.currentTime = 0;
+        updatePlayerState();
+        updateProgress();
       }
     });
 
@@ -91,7 +158,15 @@ function initAudioCard(cardId, audioId) {
       isPlayingByTouch = false;
       audio.pause();
       audio.currentTime = 0;
+      updatePlayerState();
+      updateProgress();
     });
+
+    // Marcar como preproducción si el badge lo indica
+    const projectBadge = projectCard.querySelector('.project-badge');
+    if (projectBadge && projectBadge.textContent.includes('PRODUCCIÓN')) {
+      audioPlayer.classList.add('preproduction');
+    }
   }
 }
 
