@@ -12,7 +12,7 @@ function loadCriticalResources() {
   });
 }
 
-// === FUNCIÓN REUTILIZABLE PARA TARJETAS DE AUDIO (NUEVO) ===
+// === FUNCIÓN REUTILIZABLE PARA TARJETAS DE AUDIO (MEJORADA) ===
 function initAudioCard(cardId, audioId) {
   const projectCard = document.getElementById(cardId);
   const audio = document.getElementById(audioId);
@@ -21,6 +21,30 @@ function initAudioCard(cardId, audioId) {
     let isPlayingByTouch = false;
     let touchStartY = null;
 
+    // Función para formatear el tiempo (segundos a MM:SS)
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    // Función para actualizar el reproductor
+    function updateAudioPlayer() {
+        const playerElement = projectCard.querySelector('.audio-player');
+        if (!playerElement) return;
+        
+        const playBtn = playerElement.querySelector('.play-btn');
+        const progressFill = playerElement.querySelector('.progress-fill');
+        const progressWave = playerElement.querySelector('.progress-wave');
+        const currentTimeEl = playerElement.querySelector('.current-time');
+        const durationEl = playerElement.querySelector('.duration');
+        
+        // ... resto del código nuevo
+    }
+
+    // ... resto de la función nueva
+  }
+}
     // Desktop: al entrar con mouse o pen
     projectCard.addEventListener('pointerenter', (e) => {
       if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
