@@ -1580,3 +1580,133 @@ footer {
   padding: 10px;
 }
 [file content end]
+
+/* ===== ESTILOS DEL REPRODUCTOR DE AUDIO ===== */
+.audio-player {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(200, 162, 95, 0.1);
+    border-radius: 8px;
+    margin: 15px 0;
+    border: 1px solid rgba(200, 162, 95, 0.2);
+    transition: all 0.3s ease;
+}
+
+.audio-player:hover {
+    background: rgba(200, 162, 95, 0.15);
+    border-color: rgba(200, 162, 95, 0.3);
+}
+
+.play-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #c8a25f;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    font-size: 0.9rem;
+}
+
+.play-btn:hover {
+    background: #b8934c;
+    transform: scale(1.05);
+}
+
+.play-btn.playing .fa-play::before {
+    content: "\f04c"; /* Icono de pausa */
+}
+
+.progress-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(200, 162, 95, 0.3);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.progress-bar:hover {
+    background: rgba(200, 162, 95, 0.4);
+}
+
+.progress-fill {
+    height: 100%;
+    background: #c8a25f;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.1s linear;
+    position: relative;
+    z-index: 2;
+}
+
+.progress-wave {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(200, 162, 95, 0.3) 50%, 
+        transparent 100%);
+    background-size: 200% 100%;
+    animation: wave 2s infinite linear;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.progress-wave.active {
+    opacity: 1;
+}
+
+@keyframes wave {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.time-display {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Poppins', sans-serif;
+}
+
+.current-time {
+    font-weight: 500;
+}
+
+.duration {
+    font-weight: 300;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .audio-player {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .play-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
+    }
+}
