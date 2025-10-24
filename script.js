@@ -488,3 +488,10 @@ if ('serviceWorker' in navigator) {
     console.log('Service Worker listo para implementar');
   });
 }
+
+// Inicializar sistema de estadísticas
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof StatsSystem !== 'undefined') {
+        console.log('✅ Sistema de estadísticas listo');
+    }
+});
