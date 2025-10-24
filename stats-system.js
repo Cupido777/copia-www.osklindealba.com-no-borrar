@@ -170,7 +170,7 @@ class StatsSystem {
         // === SOLO UN CONTENEDOR - SIN DUPLICACIÓN ===
         const statsHTML = `
             <div class="stats-system-container">
-                <div class="stats-title">Interacción de la Comunidad</div>
+                <div class="stats-title">Interacción De La Comunidad</div>
                 <div class="stats-grid">
                     <div class="stat-item" onclick="window.statsSystem.handleStatClick('visits')">
                         <span class="stat-number" id="stat-visits">${this.stats.visits}</span>
