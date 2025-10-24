@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Optimizar event listeners
   optimizeEventListeners();
 
-  // 1. Menú móvil funcional - MODIFICADO PARA CIERRE AUTOMÁTICO
+  // 1. Menú móvil funcional - MODIFICADO PARA CIERRE AUTOMÁTICO Y SIN BOTÓN X
   const toggle = document.getElementById('site-nav-toggle');
   const nav = document.getElementById('site-nav');
   
@@ -167,19 +167,10 @@ document.addEventListener('DOMContentLoaded', function() {
         nav.classList.remove('open');
         toggle.setAttribute('aria-expanded', 'false');
         document.body.style.overflow = 'auto';
-        
-        // El smooth scroll ya está manejado por el evento general más abajo
       });
     });
 
     // ELIMINADO: Cierre automático al hacer clic fuera (ya no es necesario)
-    // document.addEventListener('click', function(e) {
-    //   if (!nav.contains(e.target) && !toggle.contains(e.target) && nav.classList.contains('open')) {
-    //     nav.classList.remove('open');
-    //     toggle.setAttribute('aria-expanded', 'false');
-    //     document.body.style.overflow = 'auto';
-    //   }
-    // });
   }
 
   // 2. Keyboard support para menú
@@ -479,10 +470,9 @@ Este mensaje fue enviado desde el formulario de contacto de ODAM Producción Mus
   setInterval(displayVerse, 60000);
 
   // ===== INICIALIZACIÓN DE TARJETAS DE AUDIO (SOLO CLICK EN PLAY) =====
-  // VERIFICADO: Todas las tarjetas están correctamente inicializadas
   initAudioCard('project-tu-me-sostendras', 'audio-tu-me-sostendras');
   initAudioCard('project-renovados-en-tu-voluntad', 'audio-renovados-en-tu-voluntad');
-  initAudioCard('project-en-ti-confio-senor', 'audio-en-ti-confio-senor'); // ✅ CORREGIDO
+  initAudioCard('project-en-ti-confio-senor', 'audio-en-ti-confio-senor');
   initAudioCard('project-el-diezmo-es-del-senor-version-bachata', 'audio-el-diezmo-es-del-senor-version-bachata');
   initAudioCard('project-jonas-y-el-gran-pez', 'audio-jonas-y-el-gran-pez');
   initAudioCard('project-el-hijo-de-manoa', 'audio-el-hijo-de-manoa');
