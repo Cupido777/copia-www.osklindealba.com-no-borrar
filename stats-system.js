@@ -173,15 +173,15 @@ class StatsSystem {
                 <div class="stats-title">Interacción de la Comunidad</div>
                 <div class="stats-grid">
                     <div class="stat-item" onclick="window.statsSystem.handleStatClick('visits')">
-                        <span class="stat-number">${this.stats.visits}</span>
+                        <span class="stat-number" id="stat-visits">${this.stats.visits}</span>
                         <span class="stat-label">Visitas</span>
                     </div>
                     <div class="stat-item" onclick="window.statsSystem.handleStatClick('time')">
-                        <span class="stat-number">${Math.round(this.stats.timeSpent / 60000)}m</span>
+                        <span class="stat-number" id="stat-time">${Math.round(this.stats.timeSpent / 60000)}m</span>
                         <span class="stat-label">Tiempo</span>
                     </div>
                     <div class="stat-item" onclick="window.statsSystem.handleStatClick('engagement')">
-                        <span class="stat-number">${this.getEngagementScore()}%</span>
+                        <span class="stat-number" id="stat-engagement">${this.getEngagementScore()}%</span>
                         <span class="stat-label">Compromiso</span>
                     </div>
                 </div>
@@ -411,31 +411,14 @@ class StatsSystem {
     }
 
     updateStatsDisplay() {
-        const statsContainer = document.querySelector('.stats-system-container');
-        if (statsContainer) {
-            const statsHTML = `
-                <div class="stats-title">Interacción de la Comunidad</div>
-                <div class="stats-grid">
-                    <div class="stat-item" onclick="window.statsSystem.handleStatClick('visits')">
-                        <span class="stat-number">${this.stats.visits}</span>
-                        <span class="stat-label">Visitas</span>
-                    </div>
-                    <div class="stat-item" onclick="window.statsSystem.handleStatClick('time')">
-                        <span class="stat-number">${Math.round(this.stats.timeSpent / 60000)}m</span>
-                        <span class="stat-label">Tiempo</span>
-                    </div>
-                    <div class="stat-item" onclick="window.statsSystem.handleStatClick('engagement')">
-                        <span class="stat-number">${this.getEngagementScore()}%</span>
-                        <span class="stat-label">Compromiso</span>
-                    </div>
-                </div>
-            `;
-            
-            const statsGrid = statsContainer.querySelector('.stats-grid');
-            if (statsGrid) {
-                statsGrid.innerHTML = statsHTML;
-            }
-        }
+        // Actualizar solo los números, no el título
+        const visitsElement = document.getElementById('stat-visits');
+        const timeElement = document.getElementById('stat-time');
+        const engagementElement = document.getElementById('stat-engagement');
+
+        if (visitsElement) visitsElement.textContent = this.stats.visits;
+        if (timeElement) timeElement.textContent = Math.round(this.stats.timeSpent / 60000) + 'm';
+        if (engagementElement) engagementElement.textContent = this.getEngagementScore() + '%';
     }
 
     updateRatingDisplay() {
