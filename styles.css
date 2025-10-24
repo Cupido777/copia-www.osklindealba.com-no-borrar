@@ -1504,19 +1504,8 @@ footer {
     bottom: -8px;
   }
 
-  .nav-toggle[aria-expanded="true"] .hamburger {
-    background: transparent;
-  }
-
-  .nav-toggle[aria-expanded="true"] .hamburger::before {
-    transform: rotate(45deg);
-    top: 0;
-  }
-
-  .nav-toggle[aria-expanded="true"] .hamburger::after {
-    transform: rotate(-45deg);
-    bottom: 0;
-  }
+  /* === MODIFICACIÓN: ELIMINADA LA TRANSFORMACIÓN A X === */
+  /* El botón de hamburguesa ya no se transforma en X cuando está activo */
 
   .hero {
     padding: 120px 0 var(--space-xl);
