@@ -5,15 +5,40 @@ class StatsSystem {
         this.rating = this.loadRating();
         this.restrictedWords = this.getRestrictedWords();
         this.analyticsEnabled = false;
+        this.containerCreated = false; // 👈 NUEVO: Control de duplicados
         this.init();
     }
 
     init() {
-        this.createStatsContainer();
+        // 👇 VERIFICAR SI EL CONTENEDOR YA EXISTE ANTES DE CREARLO
+        if (!this.containerCreated && !document.querySelector('.stats-system-container')) {
+            this.createStatsContainer();
+            this.containerCreated = true;
+        }
+        
         this.initStatsTracking();
         this.initAnalytics();
         this.updateDisplay();
         console.log('📊 Sistema de estadísticas ODAM inicializado con Analytics');
+    }
+
+    // 👇 MÉTODO PARA ELIMINAR DUPLICADOS SI EXISTEN
+    removeDuplicates() {
+        const containers = document.querySelectorAll('.stats-system-container');
+        if (containers.length > 1) {
+            console.log(`🔄 Eliminando ${containers.length - 1} contenedores duplicados`);
+            for (let i = 1; i < containers.length; i++) {
+                containers[i].remove();
+            }
+        }
+        
+        const modals = document.querySelectorAll('#feedback-modal');
+        if (modals.length > 1) {
+            console.log(`🔄 Eliminando ${modals.length - 1} modales duplicados`);
+            for (let i = 1; i < modals.length; i++) {
+                modals[i].remove();
+            }
+        }
     }
 
     // ===== INTEGRACIÓN GOOGLE ANALYTICS 4 =====
@@ -339,6 +364,12 @@ class StatsSystem {
     }
 
     createStatsContainer() {
+        // 👇 VERIFICACIÓN DOBLE PARA EVITAR DUPLICADOS
+        if (document.querySelector('.stats-system-container')) {
+            console.log('⚠️ El contenedor de estadísticas ya existe. Evitando duplicado.');
+            return;
+        }
+
         const statsHTML = `
             <div class="stats-system-container">
                 <div class="stats-title">Interacción de la Comunidad</div>
@@ -391,8 +422,11 @@ class StatsSystem {
         `;
 
         const interactionSection = document.getElementById('interaccion');
-        if (interactionSection) {
+        if (interactionSection && !interactionSection.querySelector('.stats-system-container')) {
             interactionSection.insertAdjacentHTML('beforeend', statsHTML);
+            console.log('✅ Contenedor de estadísticas creado exitosamente');
+        } else {
+            console.log('⚠️ Sección de interacción no encontrada o contenedor ya existe');
         }
 
         this.createFeedbackModal();
@@ -412,6 +446,12 @@ class StatsSystem {
     }
 
     createFeedbackModal() {
+        // Verificar si el modal ya existe
+        if (document.getElementById('feedback-modal')) {
+            console.log('⚠️ Modal de feedback ya existe. Evitando duplicado.');
+            return;
+        }
+
         const modalHTML = `
             <div id="feedback-modal" class="feedback-modal">
                 <div class="feedback-modal-content">
@@ -781,8 +821,22 @@ class LighthouseTracker {
     }
 }
 
+// 👇 INICIALIZACIÓN MEJORADA PARA EVITAR MÚLTIPLES INSTANCIAS
 document.addEventListener('DOMContentLoaded', function() {
-    window.statsSystem = new StatsSystem();
+    // Verificar si ya existe una instancia
+    if (!window.statsSystem) {
+        window.statsSystem = new StatsSystem();
+        
+        // Limpiar duplicados después de un breve delay
+        setTimeout(() => {
+            if (window.statsSystem && typeof window.statsSystem.removeDuplicates === 'function') {
+                window.statsSystem.removeDuplicates();
+            }
+        }, 1000);
+    } else {
+        console.log('⚠️ StatsSystem ya está inicializado. Evitando duplicado.');
+    }
+    
     window.LighthouseTracker = LighthouseTracker;
     LighthouseTracker.init();
 });
