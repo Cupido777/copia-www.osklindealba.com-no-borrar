@@ -453,7 +453,7 @@ function initBibleVerses() {
     setInterval(displayVerse, 30000);
 }
 
-// === FORMULARIO DE CONTACTO ===
+// === FORMULARIO DE CONTACTO MEJORADO ===
 function initContactForm() {
     const contactForm = document.getElementById('contact-form');
     const modal = document.getElementById('contact-modal');
@@ -465,50 +465,56 @@ function initContactForm() {
         return emailRegex.test(email);
     }
 
-    contactForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-        submitBtn.disabled = true;
+    function showFormMessage(message, type = 'success') {
+        const existingMessage = contactForm.querySelector('.form-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
 
-        // Validar campos requeridos
-        const requiredFields = contactForm.querySelectorAll('[required]');
-        let isValid = true;
+        const messageEl = document.createElement('div');
+        messageEl.className = `form-message ${type}`;
+        messageEl.textContent = message;
+        messageEl.style.cssText = `
+            padding: 12px;
+            margin: 16px 0;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            ${type === 'success' ? 'background: #d4edda; color: #155724; border: 1px solid #c3e6cb;' : 'background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;'}
+        `;
+
+        contactForm.insertBefore(messageEl, contactForm.firstChild);
         
-        requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                isValid = false;
-                field.style.borderColor = '#ff6b6b';
+        setTimeout(() => {
+            messageEl.remove();
+        }, 5000);
+    }
+
+    async function submitForm(data) {
+        try {
+            const response = await fetch('form-handler.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                return { success: true, message: '¡Mensaje enviado correctamente! Te contactaremos pronto.' };
             } else {
-                field.style.borderColor = '';
+                throw new Error('Error en el servidor');
             }
-        });
-        
-        if (!isValid) {
-            alert('Por favor completa todos los campos obligatorios (*)');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            return;
+        } catch (error) {
+            console.error('Error enviando formulario:', error);
+            return { 
+                success: false, 
+                message: 'Error al enviar el formulario. Redirigiendo a email...' 
+            };
         }
-        
-        // Validar email
-        const emailField = contactForm.querySelector('input[type="email"]');
-        if (emailField && !isValidEmail(emailField.value)) {
-            alert('Por favor ingresa un correo electrónico válido');
-            emailField.focus();
-            emailField.style.borderColor = '#ff6b6b';
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            return;
-        }
-        
-        // Obtener datos del formulario
-        const formData = new FormData(contactForm);
-        const data = Object.fromEntries(formData);
-        
-        // Construir email
+    }
+
+    function createMailtoLink(data) {
         const subject = `Nueva solicitud de servicio: ${data['service-type']}`;
         const body = `
 Solicitud de Cotización - ODAM Producción Musical
@@ -531,20 +537,72 @@ ${data.message}
 Este mensaje fue enviado desde el formulario de contacto de ODAM Producción Musical.
         `.trim();
 
-        const mailtoLink = `mailto:odeam@osklindealba.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        return `mailto:odeam@osklindealba.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+
+    contactForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
         
-        setTimeout(() => {
-            window.location.href = mailtoLink;
-            alert('¡Gracias! Se abrirá tu cliente de email para que envíes la solicitud.');
-            
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        submitBtn.disabled = true;
+
+        // Validar campos requeridos
+        const requiredFields = contactForm.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.style.borderColor = '#ff6b6b';
+            } else {
+                field.style.borderColor = '';
+            }
+        });
+        
+        if (!isValid) {
+            showFormMessage('Por favor completa todos los campos obligatorios (*)', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        // Validar email
+        const emailField = contactForm.querySelector('input[type="email"]');
+        if (emailField && !isValidEmail(emailField.value)) {
+            showFormMessage('Por favor ingresa un correo electrónico válido', 'error');
+            emailField.focus();
+            emailField.style.borderColor = '#ff6b6b';
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        // Obtener datos del formulario
+        const formData = new FormData(contactForm);
+        const data = Object.fromEntries(formData);
+        
+        // Intentar enviar por fetch primero
+        const result = await submitForm(data);
+        
+        if (result.success) {
+            showFormMessage(result.message, 'success');
             setTimeout(() => {
                 if (modal) modal.classList.remove('active');
                 contactForm.reset();
                 document.body.style.overflow = 'auto';
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }, 2000);
-        }, 1000);
+            }, 3000);
+        } else {
+            showFormMessage(result.message, 'error');
+            // Fallback a mailto
+            setTimeout(() => {
+                window.location.href = createMailtoLink(data);
+            }, 1000);
+        }
+        
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     });
 }
 
