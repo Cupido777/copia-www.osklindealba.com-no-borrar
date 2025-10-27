@@ -1,43 +1,59 @@
-[file name]: stats-system.js
-[file content begin]
-// stats-system.js - SISTEMA DE ESTADÍSTICAS DISCRETO MEJORADO CON ANALYTICS Y CSRF
+// stats-system.js - SISTEMA DE ESTADÍSTICAS DISCRETO MEJORADO Y REPARADO
+// CORRECCIONES: Inicialización única + CSRF integrado + Errores de duplicados solucionados
+
 class StatsSystem {
     constructor() {
+        // CORRECCIÓN: Prevenir múltiples instancias
+        if (window.statsSystemInstance) {
+            return window.statsSystemInstance;
+        }
+        window.statsSystemInstance = this;
+
         this.stats = this.loadStats();
         this.rating = this.loadRating();
         this.restrictedWords = this.getRestrictedWords();
         this.analyticsEnabled = false;
         this.containerCreated = false;
         this.csrfToken = null;
+        this.initialized = false;
         this.init();
     }
 
     async init() {
+        if (this.initialized) return;
+        
         await this.loadCSRFToken();
         
-        // 👇 VERIFICAR SI EL CONTENEDOR YA EXISTE ANTES DE CREARLO
-        if (!this.containerCreated && !document.querySelector('.stats-system-container')) {
+        // CORRECCIÓN: Verificación mejorada para evitar duplicados
+        if (!this.containerCreated && !this.checkExistingContainer()) {
             this.createStatsContainer();
             this.containerCreated = true;
+        } else {
+            console.log('⚠️ StatsSystem: Contenedor ya existe, evitando duplicado');
         }
         
         this.initStatsTracking();
         this.initAnalytics();
         this.updateDisplay();
+        this.initialized = true;
+        
         console.log('📊 Sistema de estadísticas ODAM inicializado con Analytics y CSRF');
+    }
+
+    // ===== VERIFICACIÓN DE CONTENEDOR EXISTENTE =====
+    checkExistingContainer() {
+        return document.querySelector('.stats-system-container') !== null;
     }
 
     // ===== SISTEMA CSRF MEJORADO =====
     async loadCSRFToken() {
         try {
-            // Intentar obtener el token del manager global
             if (window.csrfTokenManager) {
                 this.csrfToken = window.csrfTokenManager.getToken();
                 console.log('✅ Token CSRF cargado desde manager global');
                 return;
             }
             
-            // Fallback: generar token local
             const randomBytes = new Uint8Array(32);
             crypto.getRandomValues(randomBytes);
             this.csrfToken = Array.from(randomBytes, byte => 
@@ -48,7 +64,6 @@ class StatsSystem {
             
         } catch (error) {
             console.error('❌ Error cargando token CSRF:', error);
-            // Fallback extremo
             this.csrfToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
         }
     }
@@ -67,7 +82,7 @@ class StatsSystem {
         return isValid;
     }
 
-    // 👇 MÉTODO PARA ELIMINAR DUPLICADOS SI EXISTEN
+    // ===== ELIMINAR DUPLICADOS MEJORADO =====
     removeDuplicates() {
         const containers = document.querySelectorAll('.stats-system-container');
         if (containers.length > 1) {
@@ -88,7 +103,8 @@ class StatsSystem {
 
     // ===== INTEGRACIÓN GOOGLE ANALYTICS 4 =====
     initAnalytics() {
-        // Inyectar Google Analytics 4 solo si no existe
+        if (this.analyticsEnabled) return;
+
         if (!document.querySelector('script[src*="googletagmanager.com"]')) {
             const gaScript = document.createElement('script');
             gaScript.async = true;
@@ -116,21 +132,8 @@ class StatsSystem {
             });
         }
 
-        // Track también en estadísticas internas
         this.stats.clicks++;
         this.saveStats();
-    }
-
-    // ===== CDN PARA ASSETS ESTÁTICOS =====
-    getCDNUrl(path) {
-        const cdnBase = 'https://cdn.osklindealba.com';
-        const localBase = '';
-        
-        // En producción usar CDN, en desarrollo local
-        if (window.location.hostname === 'www.osklindealba.com') {
-            return `${cdnBase}${path}`;
-        }
-        return `${localBase}${path}`;
     }
 
     // ===== SERVICE WORKER INTEGRATION =====
@@ -151,19 +154,12 @@ class StatsSystem {
     loadStats() {
         try {
             const stored = localStorage.getItem('odam-stats');
-            return stored ? JSON.parse(stored) : {
-                visits: 0,
-                timeSpent: 0,
-                scrollDepth: 0,
-                clicks: 0,
-                lastVisit: null,
-                projectsViewed: 0,
-                servicesExplored: 0,
-                audioPlays: 0,
-                formSubmissions: 0,
-                ratingsGiven: 0,
-                feedbackSubmitted: 0
-            };
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                // CORRECCIÓN: Asegurar que todos los campos existan
+                return { ...this.getDefaultStats(), ...parsed };
+            }
+            return this.getDefaultStats();
         } catch (e) {
             console.error('Error cargando estadísticas:', e);
             return this.getDefaultStats();
@@ -173,13 +169,11 @@ class StatsSystem {
     loadRating() {
         try {
             const stored = localStorage.getItem('odam-rating');
-            return stored ? JSON.parse(stored) : {
-                likes: 0,
-                dislikes: 0,
-                userVote: null,
-                totalVotes: 0,
-                lastVote: null
-            };
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                return { ...this.getDefaultRating(), ...parsed };
+            }
+            return this.getDefaultRating();
         } catch (e) {
             console.error('Error cargando rating:', e);
             return this.getDefaultRating();
@@ -216,7 +210,6 @@ class StatsSystem {
         try {
             localStorage.setItem('odam-stats', JSON.stringify(this.stats));
             
-            // Enviar a Analytics si hay cambios significativos
             if (this.analyticsEnabled) {
                 this.sendStatsToAnalytics();
             }
@@ -241,7 +234,6 @@ class StatsSystem {
             this.rating.lastVote = new Date().toISOString();
             localStorage.setItem('odam-rating', JSON.stringify(this.rating));
             
-            // Track en Analytics
             if (this.analyticsEnabled) {
                 this.trackEvent('rating_given', 'user_engagement', this.rating.userVote, this.rating.totalVotes);
             }
@@ -269,7 +261,6 @@ class StatsSystem {
             this.stats.lastVisit = today;
             this.saveStats();
             
-            // Track en Analytics
             this.trackEvent('visit', 'user_engagement', 'daily_visit', this.stats.visits);
         }
     }
@@ -280,7 +271,6 @@ class StatsSystem {
             this.stats.timeSpent += Date.now() - this.startTime;
             this.saveStats();
             
-            // Track session duration en Analytics
             this.trackEvent('session_end', 'user_engagement', 'session_duration', this.stats.timeSpent);
         });
     }
@@ -296,7 +286,6 @@ class StatsSystem {
                 this.stats.scrollDepth = maxScroll;
                 this.saveStats();
                 
-                // Track scroll depth en Analytics
                 if (scrollPercent % 25 === 0) {
                     this.trackEvent('scroll', 'user_engagement', `scroll_${scrollPercent}%`, scrollPercent);
                 }
@@ -310,7 +299,6 @@ class StatsSystem {
                 this.stats.clicks++;
                 this.saveStats();
                 
-                // Track clicks en elementos importantes
                 const target = e.target.closest('a') || e.target.closest('button');
                 if (target) {
                     const label = target.textContent.trim() || target.getAttribute('aria-label') || 'unknown';
@@ -380,7 +368,7 @@ class StatsSystem {
     }
 
     rate(voteType) {
-        // CORRECCIÓN: Verificar que voteType sea válido
+        // CORRECCIÓN: Validación mejorada del tipo de voto
         if (!voteType || !['like', 'dislike'].includes(voteType)) {
             console.error('Tipo de voto inválido:', voteType);
             return;
@@ -434,8 +422,8 @@ class StatsSystem {
     }
 
     createStatsContainer() {
-        // 👇 VERIFICACIÓN DOBLE PARA EVITAR DUPLICADOS
-        if (document.querySelector('.stats-system-container')) {
+        // CORRECCIÓN: Verificación doble mejorada
+        if (this.checkExistingContainer()) {
             console.log('⚠️ El contenedor de estadísticas ya existe. Evitando duplicado.');
             return;
         }
@@ -492,7 +480,7 @@ class StatsSystem {
         `;
 
         const interactionSection = document.getElementById('interaccion');
-        if (interactionSection && !interactionSection.querySelector('.stats-system-container')) {
+        if (interactionSection && !this.checkExistingContainer()) {
             interactionSection.insertAdjacentHTML('beforeend', statsHTML);
             console.log('✅ Contenedor de estadísticas creado exitosamente');
             this.setupStatsEventListeners();
@@ -531,7 +519,6 @@ class StatsSystem {
     }
 
     initLighthouseTracking() {
-        // Simular score de Lighthouse (en producción se calcularía con API)
         setTimeout(() => {
             const score = Math.floor(Math.random() * 20) + 80; // 80-100
             const scoreElement = document.getElementById('lighthouse-score');
@@ -653,15 +640,15 @@ class StatsSystem {
         
         // Validación mejorada con patrones maliciosos
         const maliciousPatterns = [
-            /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, // Script tags
-            /javascript:/gi, // JavaScript protocol
-            /on\w+\s*=/gi, // Event handlers
-            /expression\s*\(/gi, // CSS expressions
-            /vbscript:/gi, // VBScript
-            /<\w+(\s+(\w|\w[\w-]*\w)(\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]+))?)+\s*\/?>\s*<\/\w+>/gi, // HTML tags
-            /(http|https):\/\/[^\s]+/g, // URLs
-            /\b[\w\.-]+@[\w\.-]+\.\w+\b/g, // Emails
-            /(\b)(admin|root|system)(\b)/gi // Términos sensibles
+            /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+            /javascript:/gi,
+            /on\w+\s*=/gi,
+            /expression\s*\(/gi,
+            /vbscript:/gi,
+            /<\w+(\s+(\w|\w[\w-]*\w)(\s*=\s*(?:"[^"]*"|'[^']*'|[^'">\s]+))?)+\s*\/?>\s*<\/\w+>/gi,
+            /(http|https):\/\/[^\s]+/g,
+            /\b[\w\.-]+@[\w\.-]+\.\w+\b/g,
+            /(\b)(admin|root|system)(\b)/gi
         ];
         
         const hasMaliciousPattern = maliciousPatterns.some(pattern => 
@@ -1054,7 +1041,6 @@ class LighthouseTracker {
                 const loadTime = navigationTiming.loadEventEnd - navigationTiming.navigationStart;
                 console.log(`🚀 Lighthouse - Page Load Time: ${loadTime}ms`);
                 
-                // Enviar a Analytics
                 if (typeof gtag !== 'undefined') {
                     gtag('event', 'performance_timing', {
                         load_time: loadTime,
@@ -1066,7 +1052,6 @@ class LighthouseTracker {
     }
 
     static trackAccessibility() {
-        // Verificar características de accesibilidad
         const accessibilityChecks = {
             hasAltTags: document.querySelectorAll('img:not([alt])').length === 0,
             hasHeadings: document.querySelectorAll('h1, h2, h3').length > 0,
@@ -1076,14 +1061,12 @@ class LighthouseTracker {
 
         console.log('♿ Lighthouse - Accessibility:', accessibilityChecks);
         
-        // Track en Analytics
         if (typeof gtag !== 'undefined') {
             gtag('event', 'accessibility_check', accessibilityChecks);
         }
     }
 
     static checkColorContrast() {
-        // Verificación básica de contraste
         try {
             const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--rich-gold');
             const backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-black');
@@ -1098,13 +1081,12 @@ class LighthouseTracker {
             https: window.location.protocol === 'https:',
             serviceWorker: 'serviceWorker' in navigator,
             modernJS: typeof window.StatsSystem !== 'undefined',
-            responsive: window.innerWidth <= 768, // Check mobile viewport
+            responsive: window.innerWidth <= 768,
             csrfProtected: typeof window.csrfTokenManager !== 'undefined'
         };
 
         console.log('🏆 Lighthouse - Best Practices:', bestPractices);
         
-        // Track en Analytics
         if (typeof gtag !== 'undefined') {
             gtag('event', 'best_practices_check', bestPractices);
         }
@@ -1113,7 +1095,7 @@ class LighthouseTracker {
 
 // 👇 INICIALIZACIÓN MEJORADA PARA EVITAR MÚLTIPLES INSTANCIAS
 document.addEventListener('DOMContentLoaded', function() {
-    // Verificar si ya existe una instancia
+    // CORRECCIÓN: Verificación mejorada para evitar instancias múltiples
     if (!window.statsSystem) {
         window.statsSystem = new StatsSystem();
         
@@ -1142,4 +1124,3 @@ document.addEventListener('DOMContentLoaded', function() {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { StatsSystem, LighthouseTracker };
 }
-[file content end]
