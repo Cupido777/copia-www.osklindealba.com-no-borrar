@@ -1,3 +1,5 @@
+[file name]: stats-system.js
+[file content begin]
 // stats-system.js - SISTEMA DE ESTADÍSTICAS DISCRETO MEJORADO CON ANALYTICS Y CSRF
 class StatsSystem {
     constructor() {
@@ -90,13 +92,13 @@ class StatsSystem {
         if (!document.querySelector('script[src*="googletagmanager.com"]')) {
             const gaScript = document.createElement('script');
             gaScript.async = true;
-            gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX';
+            gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-C7PBME3G90';
             document.head.appendChild(gaScript);
 
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-XXXXXXXXXX');
+            gtag('config', 'G-C7PBME3G90');
         }
 
         this.analyticsEnabled = true;
@@ -378,8 +380,8 @@ class StatsSystem {
     }
 
     rate(voteType) {
-        // Validar que el voto sea válido
-        if (!['like', 'dislike'].includes(voteType)) {
+        // CORRECCIÓN: Verificar que voteType sea válido
+        if (!voteType || !['like', 'dislike'].includes(voteType)) {
             console.error('Tipo de voto inválido:', voteType);
             return;
         }
@@ -442,19 +444,19 @@ class StatsSystem {
             <div class="stats-system-container">
                 <div class="stats-title">Interacción de la Comunidad</div>
                 <div class="stats-grid">
-                    <div class="stat-item" onclick="window.statsSystem.handleStatClick('visits')">
+                    <div class="stat-item" data-stat-type="visits">
                         <span class="stat-number" id="stat-visits">${this.stats.visits}</span>
                         <span class="stat-label">Visitas</span>
                     </div>
-                    <div class="stat-item" onclick="window.statsSystem.handleStatClick('time')">
+                    <div class="stat-item" data-stat-type="time">
                         <span class="stat-number" id="stat-time">${Math.round(this.stats.timeSpent / 60000)}m</span>
                         <span class="stat-label">Tiempo</span>
                     </div>
-                    <div class="stat-item" onclick="window.statsSystem.handleStatClick('engagement')">
+                    <div class="stat-item" data-stat-type="engagement">
                         <span class="stat-number" id="stat-engagement">${this.getEngagementScore()}%</span>
                         <span class="stat-label">Compromiso</span>
                     </div>
-                    <div class="stat-item" onclick="window.statsSystem.handleStatClick('projects')">
+                    <div class="stat-item" data-stat-type="projects">
                         <span class="stat-number" id="stat-projects">${this.stats.projectsViewed + this.stats.audioPlays}</span>
                         <span class="stat-label">Proyectos Vistos</span>
                     </div>
@@ -463,12 +465,12 @@ class StatsSystem {
                     <div class="rating-title">¿Te gusta nuestra página?</div>
                     <div class="rating-buttons">
                         <button class="rating-btn like-btn ${this.rating.userVote === 'like' ? 'liked' : ''}" 
-                                onclick="window.statsSystem.rate('like')"
+                                data-vote-type="like"
                                 aria-label="Me gusta">
                             <i class="fas fa-thumbs-up"></i>
                         </button>
                         <button class="rating-btn dislike-btn ${this.rating.userVote === 'dislike' ? 'disliked' : ''}" 
-                                onclick="window.statsSystem.rate('dislike')"
+                                data-vote-type="dislike"
                                 aria-label="No me gusta">
                             <i class="fas fa-thumbs-down"></i>
                         </button>
@@ -476,7 +478,7 @@ class StatsSystem {
                     <div class="rating-result">${this.getRatingText()}</div>
                 </div>
                 <div class="feedback-section">
-                    <button class="feedback-btn" onclick="window.statsSystem.openFeedbackModal()">
+                    <button class="feedback-btn" data-action="open-feedback">
                         <i class="fas fa-comment"></i> Dejar Comentarios
                     </button>
                 </div>
@@ -493,12 +495,39 @@ class StatsSystem {
         if (interactionSection && !interactionSection.querySelector('.stats-system-container')) {
             interactionSection.insertAdjacentHTML('beforeend', statsHTML);
             console.log('✅ Contenedor de estadísticas creado exitosamente');
+            this.setupStatsEventListeners();
         } else {
             console.log('⚠️ Sección de interacción no encontrada o contenedor ya existe');
         }
 
         this.createFeedbackModal();
         this.initLighthouseTracking();
+    }
+
+    setupStatsEventListeners() {
+        // Event listeners para estadísticas
+        const statItems = document.querySelectorAll('.stat-item');
+        statItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                const statType = item.getAttribute('data-stat-type');
+                this.handleStatClick(statType, e);
+            });
+        });
+
+        // Event listeners para botones de rating
+        const likeBtn = document.querySelector('.like-btn');
+        const dislikeBtn = document.querySelector('.dislike-btn');
+        const feedbackBtn = document.querySelector('.feedback-btn');
+
+        if (likeBtn) {
+            likeBtn.addEventListener('click', () => this.rate('like'));
+        }
+        if (dislikeBtn) {
+            dislikeBtn.addEventListener('click', () => this.rate('dislike'));
+        }
+        if (feedbackBtn) {
+            feedbackBtn.addEventListener('click', () => this.openFeedbackModal());
+        }
     }
 
     initLighthouseTracking() {
@@ -595,21 +624,25 @@ class StatsSystem {
             btn.addEventListener('click', () => this.closeFeedbackModal());
         });
 
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                this.closeFeedbackModal();
-            }
-        });
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.closeFeedbackModal();
+                }
+            });
+        }
 
         // Envío del formulario
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.submitFeedback();
-        });
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.submitFeedback();
+            });
+        }
 
         // Cerrar con ESC
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.classList.contains('active')) {
+            if (e.key === 'Escape' && modal && modal.classList.contains('active')) {
                 this.closeFeedbackModal();
             }
         });
@@ -689,26 +722,36 @@ class StatsSystem {
     }
 
     async submitFeedback() {
-        const comment = document.getElementById('feedback-comment').value.trim();
+        const commentInput = document.getElementById('feedback-comment');
+        if (!commentInput) return;
+
+        const comment = commentInput.value.trim();
         const errorElement = document.getElementById('feedback-error');
         const successElement = document.getElementById('feedback-success');
         const form = document.getElementById('feedback-form');
-        const csrfToken = form.querySelector('input[name="csrf_token"]').value;
+        
+        if (!form) return;
 
-        errorElement.style.display = 'none';
-        successElement.style.display = 'none';
+        const csrfToken = form.querySelector('input[name="csrf_token"]')?.value;
+
+        if (errorElement) errorElement.style.display = 'none';
+        if (successElement) successElement.style.display = 'none';
 
         // Validar token CSRF
         if (!this.validateCSRFToken(csrfToken)) {
-            errorElement.textContent = 'Error de seguridad. Por favor, recarga la página e intenta nuevamente.';
-            errorElement.style.display = 'block';
+            if (errorElement) {
+                errorElement.textContent = 'Error de seguridad. Por favor, recarga la página e intenta nuevamente.';
+                errorElement.style.display = 'block';
+            }
             return;
         }
 
         const validation = this.validateComment(comment);
         if (!validation.isValid) {
-            errorElement.textContent = validation.message;
-            errorElement.style.display = 'block';
+            if (errorElement) {
+                errorElement.textContent = validation.message;
+                errorElement.style.display = 'block';
+            }
             return;
         }
 
@@ -719,7 +762,9 @@ class StatsSystem {
             // Guardar localmente como respaldo
             this.saveFeedback(comment);
             
-            successElement.style.display = 'block';
+            if (successElement) {
+                successElement.style.display = 'block';
+            }
             this.stats.feedbackSubmitted++;
             this.saveStats();
             
@@ -728,18 +773,24 @@ class StatsSystem {
             
             setTimeout(() => {
                 this.closeFeedbackModal();
-                successElement.style.display = 'none';
+                if (successElement) {
+                    successElement.style.display = 'none';
+                }
             }, 2000);
             
         } catch (error) {
             console.error('Error enviando feedback:', error);
             // Fallback a almacenamiento local
             this.saveFeedback(comment);
-            successElement.style.display = 'block';
+            if (successElement) {
+                successElement.style.display = 'block';
+            }
             
             setTimeout(() => {
                 this.closeFeedbackModal();
-                successElement.style.display = 'none';
+                if (successElement) {
+                    successElement.style.display = 'none';
+                }
             }, 2000);
         }
     }
@@ -905,12 +956,14 @@ class StatsSystem {
         return `${percentage}% de las personas les gusta esta página (${total} votos)`;
     }
 
-    handleStatClick(statType) {
-        const statItem = event.currentTarget;
-        statItem.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            statItem.style.transform = 'scale(1)';
-        }, 150);
+    handleStatClick(statType, event) {
+        if (event) {
+            const statItem = event.currentTarget;
+            statItem.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                statItem.style.transform = 'scale(1)';
+            }, 150);
+        }
         
         // Track en Analytics
         this.trackEvent('stat_click', 'user_interaction', statType);
@@ -1089,3 +1142,4 @@ document.addEventListener('DOMContentLoaded', function() {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { StatsSystem, LighthouseTracker };
 }
+[file content end]
