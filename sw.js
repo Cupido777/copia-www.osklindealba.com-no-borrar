@@ -1,3 +1,5 @@
+[file name]: sw.js
+[file content begin]
 // =============================================
 // ODAM Producción Musical - Service Worker
 // Cache Strategy & Performance Optimization
@@ -146,7 +148,7 @@ async function handleRequest(event) {
   
   // Estrategia para imágenes - Cache First con actualización
   if (request.destination === 'image') {
-    return staleWhileRevalidateStrategy(request);
+    return staleWhileRevalidateStrategy(event); // CORRECCIÓN: Pasar el event
   }
   
   // Estrategia para audio - Cache First
@@ -219,7 +221,8 @@ async function networkFirstStrategy(request) {
 }
 
 // ===== ESTRATEGIA STALE WHILE REVALIDATE =====
-async function staleWhileRevalidateStrategy(request) {
+async function staleWhileRevalidateStrategy(event) { // CORRECCIÓN: Recibir event como parámetro
+  const request = event.request;
   const cache = await caches.open(CACHE_NAME);
   const cachedResponse = await cache.match(request);
   
@@ -236,7 +239,10 @@ async function staleWhileRevalidateStrategy(request) {
       // Ignorar errores de actualización
     });
   
-  event.waitUntil(fetchPromise);
+  // CORRECCIÓN: Usar event.waitUntil correctamente
+  if (event.waitUntil) {
+    event.waitUntil(fetchPromise);
+  }
   
   return cachedResponse || fetchPromise;
 }
@@ -532,3 +538,4 @@ if (typeof module !== 'undefined' && module.exports) {
     staleWhileRevalidateStrategy
   };
 }
+[file content end]
