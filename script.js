@@ -1,3 +1,5 @@
+[file name]: script.js
+[file content begin]
 // script.js - ODAM PRODUCCIÓN MUSICAL - SISTEMA COMPLETO OPTIMIZADO
 // Integraciones: Service Worker, GA4, Formulario Backend, PWA, CDN, Lighthouse
 
@@ -146,6 +148,12 @@ class AudioPlayerSystem {
             audioPlayer: card.querySelector('.audio-player-mini'),
             isPlaying: false
         };
+
+        // Verificar que todos los elementos necesarios existan
+        if (!player.playBtn || !player.progressBar || !player.audioTime || !player.waveform || !player.waveBars || !player.audioPlayer) {
+            console.warn(`❌ Elementos del reproductor no encontrados en: ${cardId}`);
+            return;
+        }
 
         // Inicializar sistema de ondas para este audio
         const waveSystem = new InteractiveWaveSystem();
@@ -370,7 +378,7 @@ class InteractiveWaveSystem {
     }
 
     updateWaveform(waveBars) {
-        if (!this.analyser || !this.initialized) return;
+        if (!this.analyser || !this.initialized || !waveBars) return;
 
         // Obtener datos de frecuencia
         this.analyser.getByteFrequencyData(this.dataArray);
@@ -552,7 +560,7 @@ class FormHandler {
 
         // Modal de contacto
         document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('open-contact-modal') || 
+            if (e.target.classList.contains('.open-contact-modal') || 
                 e.target.closest('.open-contact-modal')) {
                 e.preventDefault();
                 this.openContactModal();
@@ -831,7 +839,7 @@ Este mensaje fue enviado desde el formulario de contacto de ODAM Producción Mus
 // ===== SISTEMA DE GOOGLE ANALYTICS 4 =====
 class GoogleAnalyticsManager {
     constructor() {
-        this.measurementId = 'G-XXXXXXXXXX'; // Reemplazar con tu ID real
+        this.measurementId = 'G-C7PBME3G90'; // CORREGIDO: Usar el mismo ID que en el HTML
         this.init();
     }
 
@@ -1012,31 +1020,35 @@ class PWAManager {
     }
 
     setupInstallPrompt() {
-        const installButton = document.createElement('button');
-        installButton.id = 'pwa-install-button';
-        installButton.innerHTML = '📱 Instalar App';
-        installButton.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #c8a25f, #d4af37);
-            color: black;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 25px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(200, 162, 95, 0.4);
-            z-index: 1000;
-            display: none;
-            animation: bounce 2s infinite;
-        `;
+        // Verificar si ya existe el botón en el HTML
+        let installButton = document.getElementById('pwa-install-button');
+        if (!installButton) {
+            installButton = document.createElement('button');
+            installButton.id = 'pwa-install-button';
+            installButton.innerHTML = '📱 Instalar App';
+            installButton.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #c8a25f, #d4af37);
+                color: black;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 25px;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(200, 162, 95, 0.4);
+                z-index: 1000;
+                display: none;
+                animation: bounce 2s infinite;
+            `;
 
-        installButton.addEventListener('click', () => {
-            this.promptInstallation();
-        });
+            installButton.addEventListener('click', () => {
+                this.promptInstallation();
+            });
 
-        document.body.appendChild(installButton);
+            document.body.appendChild(installButton);
+        }
     }
 
     setupAppBadge() {
@@ -1379,6 +1391,8 @@ const bibleVerses = [
 
 function initBibleVerses() {
     const bibleVerseElement = document.getElementById('bible-verse');
+    if (!bibleVerseElement) return;
+
     let currentVerseIndex = -1;
 
     function getRandomVerse() {
@@ -1550,6 +1564,10 @@ class LoadingSystem {
     }
 
     init() {
+        if (!this.progressBar || !this.progressFill) {
+            console.warn('Elementos de loading no encontrados');
+            return;
+        }
         this.startLoading();
         this.trackResources();
     }
@@ -1631,65 +1649,69 @@ function fixWhiteButton() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎵 ODAM - Inicializando sitio con todas las integraciones...');
 
-    // Sistema de carga
-    const loadingSystem = new LoadingSystem();
-    loadingSystem.init();
+    try {
+        // Sistema de carga
+        const loadingSystem = new LoadingSystem();
+        loadingSystem.init();
 
-    // Sistema de animaciones
-    const animationSystem = new AnimationSystem();
-    animationSystem.init();
+        // Sistema de animaciones
+        const animationSystem = new AnimationSystem();
+        animationSystem.init();
 
-    // Sistema de partículas
-    const particlesSystem = new InteractiveParticles();
-    particlesSystem.init();
+        // Sistema de partículas
+        const particlesSystem = new InteractiveParticles();
+        particlesSystem.init();
 
-    // Sistema de audio
-    window.audioSystem = new AudioPlayerSystem();
+        // Sistema de audio
+        window.audioSystem = new AudioPlayerSystem();
 
-    // Service Worker
-    window.serviceWorkerManager = new ServiceWorkerManager();
+        // Service Worker
+        window.serviceWorkerManager = new ServiceWorkerManager();
 
-    // Google Analytics
-    window.gaManager = new GoogleAnalyticsManager();
+        // Google Analytics
+        window.gaManager = new GoogleAnalyticsManager();
 
-    // Form Handler
-    window.formHandler = new FormHandler();
+        // Form Handler
+        window.formHandler = new FormHandler();
 
-    // PWA Manager
-    window.pwaManager = new PWAManager();
+        // PWA Manager
+        window.pwaManager = new PWAManager();
 
-    // CDN Manager
-    window.cdnManager = new CDNManager();
+        // CDN Manager
+        window.cdnManager = new CDNManager();
 
-    // Optimizar event listeners
-    optimizeEventListeners();
+        // Optimizar event listeners
+        optimizeEventListeners();
 
-    // Inicializar componentes
-    initMobileMenu();
-    initSmoothScroll();
-    initHeaderScroll();
-    initBibleVerses();
-    fixWhiteButton();
+        // Inicializar componentes
+        initMobileMenu();
+        initSmoothScroll();
+        initHeaderScroll();
+        initBibleVerses();
+        fixWhiteButton();
 
-    // Lighthouse Config
-    if (typeof LighthouseConfig !== 'undefined') {
-        window.lighthouseAudit = new LighthouseConfig();
+        // Lighthouse Config
+        if (typeof LighthouseConfig !== 'undefined') {
+            window.lighthouseAudit = new LighthouseConfig();
+        }
+
+        // Stats System
+        if (typeof StatsSystem !== 'undefined') {
+            window.statsSystem = new StatsSystem();
+        }
+
+        // Prefers reduced motion
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.querySelectorAll('.fade-in').forEach(el => {
+                el.style.transition = 'none';
+                el.classList.add('show');
+            });
+        }
+
+        console.log('🎵 ODAM - Sitio completamente inicializado con todas las integraciones');
+    } catch (error) {
+        console.error('Error durante la inicialización:', error);
     }
-
-    // Stats System
-    if (typeof StatsSystem !== 'undefined') {
-        window.statsSystem = new StatsSystem();
-    }
-
-    // Prefers reduced motion
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        document.querySelectorAll('.fade-in').forEach(el => {
-            el.style.transition = 'none';
-            el.classList.add('show');
-        });
-    }
-
-    console.log('🎵 ODAM - Sitio completamente inicializado con todas las integraciones');
 });
 
 // ===== PARTÍCULAS INTERACTIVAS (clase separada) =====
@@ -1701,6 +1723,9 @@ class InteractiveParticles {
 
     init() {
         if (this.isMobile || typeof particlesJS === 'undefined') return;
+
+        const particlesContainer = document.getElementById('particles-js');
+        if (!particlesContainer) return;
 
         this.particlesInstance = particlesJS('particles-js', {
             particles: {
@@ -1823,3 +1848,4 @@ if (typeof module !== 'undefined' && module.exports) {
         LoadingSystem
     };
 }
+[file content end]
