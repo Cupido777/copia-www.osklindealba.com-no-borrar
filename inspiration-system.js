@@ -1,5 +1,4 @@
-// inspiration-system.js - Sistema completo de versículos para la sección Inspiración
-
+// inspiration-system.js - Sistema CORREGIDO de versículos
 class InspirationVerseSystem {
     constructor() {
         this.bible = null;
@@ -9,7 +8,6 @@ class InspirationVerseSystem {
     }
 
     generateUserId() {
-        // Generar ID único para cada usuario/sesión
         return 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
     }
 
@@ -46,7 +44,7 @@ class InspirationVerseSystem {
 
     displayRandomVerse() {
         if (!this.bible) {
-            console.log('❌ Biblia no disponible');
+            this.showError('Biblia no disponible');
             return;
         }
 
@@ -54,22 +52,42 @@ class InspirationVerseSystem {
         if (verse) {
             const verseElement = document.getElementById('bible-verse');
             if (verseElement) {
-                verseElement.innerHTML = `
-                    <div class="verse-content">
-                        <p class="verse-text">"${verse.text}"</p>
-                        <p class="verse-reference">— ${verse.book} ${verse.chapter}:${verse.verse}</p>
-                    </div>
-                `;
-                
-                // Efecto de fade in
+                // Aplicar animación de fade out
                 verseElement.style.opacity = '0';
+                
                 setTimeout(() => {
+                    verseElement.innerHTML = `
+                        <div class="verse-content verse-fade-in">
+                            <p class="verse-text">"${verse.text}"</p>
+                            <p class="verse-reference">— ${verse.book} ${verse.chapter}:${verse.verse}</p>
+                        </div>
+                    `;
+                    
+                    // Efecto de fade in
                     verseElement.style.opacity = '1';
                     verseElement.style.transition = 'opacity 0.5s ease-in-out';
-                }, 100);
-                
-                console.log(`📖 Versículo mostrado para ${this.userId}: ${verse.book} ${verse.chapter}:${verse.verse}`);
+                    
+                    // Remover clases de estado
+                    verseElement.classList.remove('loading', 'error');
+                    
+                    console.log(`📖 Versículo mostrado para ${this.userId}: ${verse.book} ${verse.chapter}:${verse.verse}`);
+                }, 300);
             }
+        } else {
+            this.showError('No se pudo cargar el versículo');
+        }
+    }
+
+    showError(message) {
+        const verseElement = document.getElementById('bible-verse');
+        if (verseElement) {
+            verseElement.innerHTML = `
+                <div class="verse-content">
+                    <p class="verse-text">${message}</p>
+                    <p class="verse-reference">— Intenta recargar la página</p>
+                </div>
+            `;
+            verseElement.classList.add('error');
         }
     }
 
@@ -81,13 +99,13 @@ class InspirationVerseSystem {
     }
 }
 
-// Inicializar el sistema cuando el DOM esté listo
+// Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
     // Pequeño delay para asegurar que todo esté cargado
     setTimeout(() => {
         window.verseSystem = new InspirationVerseSystem();
-    }, 500);
+    }, 1000);
 });
 
-// También disponible globalmente para control manual
+// Control manual disponible globalmente
 window.InspirationVerseSystem = InspirationVerseSystem;
