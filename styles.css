@@ -1118,17 +1118,18 @@ nav a:hover::after {
   width: 100%; /* CORRECCIÓN: Aseguramos ancho completo */
 }
 
-.verse-reference::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 2px;
-  background: var(--rich-gold);
-  opacity: 0.6;
-}
+/* ✅ CORRECCIÓN: Eliminamos la línea que estaba entre el versículo y la referencia */
+/* .verse-reference::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 2px;
+    background: var(--rich-gold);
+    opacity: 0.6;
+} */
 
 /* Estados de carga y error */
 #bible-verse.loading .verse-text {
