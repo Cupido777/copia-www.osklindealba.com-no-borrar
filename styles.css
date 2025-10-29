@@ -1107,7 +1107,7 @@ nav a:hover::after {
 }
 
 .verse-reference {
-  font-size: 1.3em;
+  font-size: 1.5em;
   font-weight: var(--font-semibold);
   color: var(--rich-gold);
   margin: 0; /* CORRECCIÓN: Eliminamos márgenes conflictivos */
