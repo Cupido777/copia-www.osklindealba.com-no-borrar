@@ -1,5 +1,5 @@
 // script.js - ODAM PRODUCCIÓN MUSICAL - SISTEMA COMPLETO CON BIBLIA RV1960
-// CORRECCIONES: Audio funcionando + Biblia completa + Sistema de estadísticas + Menú móvil REPARADO
+// CORRECCIONES: Audio funcionando + Biblia completa + Sistema de estadísticas + Menú móvil REPARADO + SIN CONTADOR VISUAL
 
 // ===== DETECCIÓN DE DISPOSITIVO =====
 const isMobileDevice = () => {
@@ -1105,7 +1105,7 @@ class AnimationSystem {
     }
 }
 
-// ===== SISTEMA DE VERSÍCULOS BÍBLICOS DINÁMICOS =====
+// ===== SISTEMA DE VERSÍCULOS BÍBLICOS DINÁMICOS - SIN CONTADOR VISUAL =====
 function initBibleVerses() {
     const bibleVerseElement = document.getElementById('bible-verse');
     if (!bibleVerseElement) return;
@@ -1121,17 +1121,18 @@ function initBibleVerses() {
             bibleVerseElement.style.opacity = '0';
             
             setTimeout(() => {
+                // ✅ CORRECCIÓN: Eliminado el contador visual, solo muestra texto y referencia
                 bibleVerseElement.innerHTML = `
                     <div class="verse-content">
                         <div class="verse-text">"${verse.text}"</div>
                         <div class="verse-reference">${verse.book} ${verse.chapter}:${verse.verse}</div>
-                        <div class="verse-counter">
-                            📖 ${bible.getVersesReadInSession()}/${bible.getTotalVersesCount()} versículos vistos
-                        </div>
                     </div>
                 `;
                 bibleVerseElement.style.opacity = '1';
             }, 300);
+
+            // ✅ El conteo se mantiene internamente pero no se muestra visualmente
+            console.log(`📖 Versículo mostrado: ${verse.book} ${verse.chapter}:${verse.verse} | Total vistos en sesión: ${bible.getVersesReadInSession()}`);
 
             if (typeof gtag !== 'undefined') {
                 gtag('event', 'bible_verse_view', {
@@ -1510,7 +1511,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initMobileMenu(); // ✅ MENÚ MÓVIL REPARADO
         initSmoothScroll();
         initHeaderScroll();
-        initBibleVerses(); // ✅ SISTEMA DE BIBLIA COMPLETO
+        initBibleVerses(); // ✅ SISTEMA DE BIBLIA COMPLETO - SIN CONTADOR VISUAL
         fixWhiteButton();
 
         // CORRECCIÓN: CSS para elementos móviles
