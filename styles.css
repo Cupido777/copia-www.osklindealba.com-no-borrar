@@ -171,6 +171,7 @@ header.scrolled {
   letter-spacing: 0.5px;
 }
 
+/* === NAVEGACIÓN DESKTOP === */
 nav {
   display: flex;
   gap: var(--space-md);
@@ -225,6 +226,90 @@ nav a:hover::after {
 .cta:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-gold);
+}
+
+/* === NAVEGACIÓN MÓVIL - CORREGIDA === */
+.nav-toggle {
+  display: none !important;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 25px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1001;
+  position: relative;
+}
+
+.nav-toggle .hamburger-line {
+  width: 100%;
+  height: 3px;
+  background: var(--rich-gold);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.nav-toggle[aria-expanded="true"] .hamburger-line:nth-child(1) {
+  transform: rotate(45deg) translate(6px, 6px);
+}
+
+.nav-toggle[aria-expanded="true"] .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-toggle[aria-expanded="true"] .hamburger-line:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+@media (max-width: 768px) {
+  .nav-toggle {
+    display: flex !important;
+  }
+
+  nav {
+    position: fixed;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.98);
+    backdrop-filter: blur(20px);
+    flex-direction: column;
+    padding: var(--space-lg);
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--border-light);
+    gap: var(--space-md);
+    z-index: 999;
+  }
+
+  nav.open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  nav a {
+    width: 100%;
+    text-align: center;
+    padding: var(--space-md);
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  nav a:last-child {
+    border-bottom: none;
+  }
+
+  .cta {
+    width: 100%;
+    justify-content: center;
+    margin-top: var(--space-sm);
+  }
 }
 
 /* === HERO SECTION === */
@@ -959,6 +1044,7 @@ nav a:hover::after {
   text-align: center;
   min-height: 180px;
   display: flex;
+  flex-direction: column; /* CORRECCIÓN: Cambiado a columna */
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border-gold);
@@ -1004,27 +1090,32 @@ nav a:hover::after {
   max-width: 700px;
   position: relative;
   z-index: 2;
+  display: flex;
+  flex-direction: column; /* CORRECCIÓN: Aseguramos disposición vertical */
+  gap: 15px; /* CORRECCIÓN: Espacio entre texto y referencia */
 }
 
 .verse-text {
   font-size: 1.5em;
   font-style: italic;
   line-height: 1.6;
-  margin-bottom: 20px;
+  margin-bottom: 0; /* CORRECCIÓN: Eliminamos margen inferior */
   color: var(--text-primary);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   font-weight: var(--font-light);
+  width: 100%; /* CORRECCIÓN: Aseguramos ancho completo */
 }
 
 .verse-reference {
   font-size: 1.1em;
   font-weight: var(--font-semibold);
   color: var(--rich-gold);
-  margin: 0;
+  margin: 0; /* CORRECCIÓN: Eliminamos márgenes conflictivos */
   font-style: normal;
   letter-spacing: 0.5px;
   position: relative;
   padding-top: 15px;
+  width: 100%; /* CORRECCIÓN: Aseguramos ancho completo */
 }
 
 .verse-reference::before {
@@ -1037,6 +1128,13 @@ nav a:hover::after {
   height: 2px;
   background: var(--rich-gold);
   opacity: 0.6;
+}
+
+.verse-counter {
+  font-size: 0.7rem;
+  color: #b0b0b0;
+  margin-top: 8px;
+  width: 100%; /* CORRECCIÓN: Aseguramos ancho completo */
 }
 
 /* Estados de carga y error */
@@ -1499,71 +1597,8 @@ footer {
   transform: translateY(0);
 }
 
-/* === NAVEGACIÓN MÓVIL === */
+/* === MEJORAS RESPONSIVE ADICIONALES === */
 @media (max-width: 768px) {
-  nav {
-    position: fixed;
-    top: 70px;
-    left: 0;
-    width: 100%;
-    background: rgba(0, 0, 0, 0.98);
-    backdrop-filter: blur(20px);
-    flex-direction: column;
-    padding: var(--space-lg);
-    transform: translateY(-100%);
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    border-bottom: 1px solid var(--border-light);
-    gap: var(--space-md);
-  }
-
-  nav.open {
-    transform: translateY(0);
-    opacity: 1;
-    visibility: visible;
-  }
-
-  .nav-toggle {
-    display: flex !important;
-    flex-direction: column;
-    justify-content: space-around;
-    width: 30px;
-    height: 30px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    z-index: 1001;
-  }
-
-  .nav-toggle .hamburger {
-    width: 100%;
-    height: 2px;
-    background: var(--rich-gold);
-    transition: all 0.3s ease;
-    position: relative;
-  }
-
-  .nav-toggle .hamburger::before,
-  .nav-toggle .hamburger::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--rich-gold);
-    transition: all 0.3s ease;
-  }
-
-  .nav-toggle .hamburger::before {
-    top: -8px;
-  }
-
-  .nav-toggle .hamburger::after {
-    bottom: -8px;
-  }
-
   .hero {
     padding: 120px 0 var(--space-xl);
   }
@@ -2007,37 +2042,20 @@ footer {
   max-width: 100%;
 }
 
-/* ACTUALIZA el CSS de .verse-reference */
-.verse-reference {
-    font-size: 1.1em;
-    font-weight: var(--font-semibold);
-    color: var(--rich-gold);
-    margin: 15px 0 0 0; /* Más espacio arriba */
-    font-style: normal;
-    letter-spacing: 0.5px;
+/* === CORRECCIONES ESPECÍFICAS PARA EL VERSÍCULO === */
+.verse-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
 }
 
-/* ACTUALIZA el CSS de .verse-reference */
-.verse-reference {
-    font-size: 1.1em;
-    font-weight: var(--font-semibold);
-    color: var(--rich-gold);
-    margin: 15px 0 0 0; /* Más espacio arriba */
-    font-style: normal;
-    letter-spacing: 0.5px;
+.verse-text {
+  display: block;
+  width: 100%;
 }
 
-/* ELIMINA o COMENTA estas líneas del CSS anterior: */
-/*
-.verse-reference::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 40px;
-    height: 2px;
-    background: var(--rich-gold);
-    opacity: 0.6;
+.verse-reference {
+  display: block;
+  width: 100%;
 }
-*/
