@@ -56,12 +56,12 @@ class InspirationVerseSystem {
                 verseElement.style.opacity = '0';
                 
                 setTimeout(() => {
-                    verseElement.innerHTML = `
-                        <div class="verse-content verse-fade-in">
-                            <p class="verse-text">"${verse.text}"</p>
-                            <p class="verse-reference">— ${verse.book} ${verse.chapter}:${verse.verse}</p>
-                        </div>
-                    `;
+                   verseElement.innerHTML = `
+    <div class="verse-content verse-fade-in">
+        <p class="verse-text">${verse.text}</p>
+        <p class="verse-reference">${verse.book} ${verse.chapter}:${verse.verse}</p>
+    </div>
+`;
                     
                     // Efecto de fade in
                     verseElement.style.opacity = '1';
