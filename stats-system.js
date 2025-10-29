@@ -481,6 +481,12 @@ class StatsSystem {
 
         const interactionSection = document.getElementById('interaccion');
         if (interactionSection && !this.checkExistingContainer()) {
+            // CORRECCIÓN CRÍTICA: Eliminar el placeholder antes de insertar el contenido
+            const placeholder = interactionSection.querySelector('.stats-placeholder');
+            if (placeholder) {
+                placeholder.remove();
+            }
+            
             interactionSection.insertAdjacentHTML('beforeend', statsHTML);
             console.log('✅ Contenedor de estadísticas creado exitosamente');
             this.setupStatsEventListeners();
