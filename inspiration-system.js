@@ -3,7 +3,7 @@ class InspirationVerseSystem {
         this.bible = null;
         this.currentInterval = null;
         this.userId = this.generateUserId();
-        this.lastVerseIndex = -1; // Para evitar repeticiones consecutivas
+        this.lastVerseIndex = -1;
         this.initializeSystem();
     }
 
@@ -28,7 +28,6 @@ class InspirationVerseSystem {
         }
     }
 
-    // === MÉTODO startVerseRotation COMPLETO ===
     startVerseRotation() {
         console.log('🔄 Iniciando rotación de versículos para:', this.userId);
         console.log('📱 Dispositivo:', this.isMobile() ? 'Móvil' : 'Computador');
@@ -43,12 +42,10 @@ class InspirationVerseSystem {
         }, 120000);
     }
 
-    // === MÉTODO isMobile ===
     isMobile() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
-    // === MÉTODO displayRandomVerse COMPLETO Y FUNCIONAL ===
     displayRandomVerse() {
         if (!this.bible) {
             this.showError('Sistema bíblico no disponible en este momento.');
@@ -56,14 +53,8 @@ class InspirationVerseSystem {
         }
 
         try {
-            // Obtener versículo aleatorio evitando repeticiones consecutivas
-            let randomIndex;
-            do {
-                randomIndex = Math.floor(Math.random() * this.bible.getTotalVerses());
-            } while (randomIndex === this.lastVerseIndex && this.bible.getTotalVerses() > 1);
-            
-            this.lastVerseIndex = randomIndex;
-            const verse = this.bible.getVerse(randomIndex);
+            // CORRECCIÓN: Usar getRandomVerse() en lugar de getVerse()
+            const verse = this.bible.getRandomVerse();
             
             if (verse && verse.text) {
                 this.updateVerseDisplay(verse);
@@ -77,7 +68,6 @@ class InspirationVerseSystem {
         }
     }
 
-    // === MÉTODO updateVerseDisplay ===
     updateVerseDisplay(verse) {
         const verseElement = document.getElementById('bible-verse');
         if (!verseElement) {
@@ -99,7 +89,6 @@ class InspirationVerseSystem {
         }, 100);
     }
 
-    // === MÉTODO showError ===
     showError(message) {
         const verseElement = document.getElementById('bible-verse');
         if (verseElement) {
@@ -111,7 +100,6 @@ class InspirationVerseSystem {
         console.error('❌ Error del sistema de versículos:', message);
     }
 
-    // === MÉTODO stopRotation ===
     stopRotation() {
         if (this.currentInterval) {
             clearInterval(this.currentInterval);
@@ -120,25 +108,23 @@ class InspirationVerseSystem {
         }
     }
 
-    // === MÉTODO restartRotation ===
     restartRotation() {
         this.stopRotation();
         this.startVerseRotation();
         console.log('🔄 Rotación de versículos reiniciada para:', this.userId);
     }
 
-    // === MÉTODO getCurrentUserId ===
     getCurrentUserId() {
         return this.userId;
     }
 
-    // === MÉTODO getSystemStatus ===
     getSystemStatus() {
         return {
             userId: this.userId,
             bibleLoaded: !!this.bible,
             rotationActive: !!this.currentInterval,
-            totalVerses: this.bible ? this.bible.getTotalVerses() : 0,
+            // CORRECCIÓN: Usar getTotalVersesCount() en lugar de getTotalVerses()
+            totalVerses: this.bible ? this.bible.getTotalVersesCount() : 0,
             isMobile: this.isMobile()
         };
     }
