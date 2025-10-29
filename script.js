@@ -1,5 +1,5 @@
 // script.js - ODAM PRODUCCIÓN MUSICAL - SISTEMA COMPLETO CON BIBLIA RV1960
-// CORRECCIONES: Audio funcionando + Biblia completa + Sistema de estadísticas
+// CORRECCIONES: Audio funcionando + Biblia completa + Sistema de estadísticas + Menú móvil REPARADO
 
 // ===== DETECCIÓN DE DISPOSITIVO =====
 const isMobileDevice = () => {
@@ -30,7 +30,7 @@ class CompleteBibleRV1960 {
             // ... tus versículos originales
         ];
     }
-}
+
     getRandomVerse() {
         if (this.verses.length === 0) return null;
 
@@ -1122,10 +1122,12 @@ function initBibleVerses() {
             
             setTimeout(() => {
                 bibleVerseElement.innerHTML = `
-                    <div class="verse-text">"${verse.text}"</div>
-                    <div class="verse-reference">${verse.book} ${verse.chapter}:${verse.verse}</div>
-                    <div class="verse-counter" style="font-size: 0.7rem; color: #b0b0b0; margin-top: 8px;">
-                        📖 ${bible.getVersesReadInSession()}/${bible.getTotalVersesCount()} versículos vistos
+                    <div class="verse-content">
+                        <div class="verse-text">"${verse.text}"</div>
+                        <div class="verse-reference">${verse.book} ${verse.chapter}:${verse.verse}</div>
+                        <div class="verse-counter">
+                            📖 ${bible.getVersesReadInSession()}/${bible.getTotalVersesCount()} versículos vistos
+                        </div>
                     </div>
                 `;
                 bibleVerseElement.style.opacity = '1';
@@ -1243,16 +1245,33 @@ function optimizeEventListeners() {
     });
 }
 
-// ===== MENÚ MÓVIL =====
+// ===== MENÚ MÓVIL - COMPLETAMENTE REPARADO =====
 function initMobileMenu() {
     const toggle = document.getElementById('site-nav-toggle');
     const nav = document.getElementById('site-nav');
     
-    if (!toggle || !nav) return;
+    if (!toggle || !nav) {
+        console.warn('❌ Elementos del menú móvil no encontrados');
+        return;
+    }
+
+    console.log('✅ Inicializando menú móvil...');
+
+    // Crear estructura de hamburguesa si no existe
+    if (!toggle.querySelector('.hamburger-line')) {
+        toggle.innerHTML = `
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        `;
+    }
 
     toggle.addEventListener('click', function(e) {
         e.stopPropagation();
         const expanded = this.getAttribute('aria-expanded') === 'true';
+        
+        console.log(`🔄 Menú móvil: ${expanded ? 'cerrando' : 'abriendo'}`);
+        
         this.setAttribute('aria-expanded', String(!expanded));
         nav.classList.toggle('open');
         document.body.style.overflow = expanded ? 'auto' : 'hidden';
@@ -1265,24 +1284,40 @@ function initMobileMenu() {
         }
     });
 
+    // Cerrar menú al hacer clic en enlaces
     const navLinks = nav.querySelectorAll('a');
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
+            console.log('🔒 Cerrando menú móvil (clic en enlace)');
             nav.classList.remove('open');
             toggle.setAttribute('aria-expanded', 'false');
             document.body.style.overflow = 'auto';
         });
     });
 
+    // Cerrar menú al hacer clic fuera
     document.addEventListener('click', (e) => {
         if (nav.classList.contains('open') && 
             !nav.contains(e.target) && 
             !toggle.contains(e.target)) {
+            console.log('🔒 Cerrando menú móvil (clic fuera)');
             nav.classList.remove('open');
             toggle.setAttribute('aria-expanded', 'false');
             document.body.style.overflow = 'auto';
         }
     });
+
+    // Cerrar menú al redimensionar a desktop
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768 && nav.classList.contains('open')) {
+            console.log('🔒 Cerrando menú móvil (redimensionando a desktop)');
+            nav.classList.remove('open');
+            toggle.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = 'auto';
+        }
+    });
+
+    console.log('✅ Menú móvil inicializado correctamente');
 }
 
 // ===== SMOOTH SCROLL =====
@@ -1472,7 +1507,7 @@ document.addEventListener('DOMContentLoaded', function() {
         optimizeEventListeners();
 
         // Inicializar componentes
-        initMobileMenu();
+        initMobileMenu(); // ✅ MENÚ MÓVIL REPARADO
         initSmoothScroll();
         initHeaderScroll();
         initBibleVerses(); // ✅ SISTEMA DE BIBLIA COMPLETO
