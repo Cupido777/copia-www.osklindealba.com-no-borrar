@@ -1,5 +1,5 @@
 // script.js - ODAM PRODUCCIÓN MUSICAL - SISTEMA COMPLETO OPTIMIZADO Y REPARADO
-// CORRECCIONES: Audio en PC funcionando + PWA solo móviles + Errores de JS solucionados
+// CORRECCIONES: Audio funcionando en PC + Móviles + Políticas de autoplay reparadas
 
 // ===== DETECCIÓN DE DISPOSITIVO =====
 const isMobileDevice = () => {
@@ -99,13 +99,42 @@ class AudioPlayerSystem {
         this.audioPlayers = new Map();
         this.currentlyPlaying = null;
         this.waveSystems = new Map();
+        this.audioContexts = new Map(); // CORRECCIÓN: Múltiples contextos
+        this.userInteracted = false; // CORRECCIÓN: Control de interacción
         this.init();
     }
 
     init() {
-        console.log('🎵 Sistema de audio inicializado');
+        console.log('🎵 Sistema de audio inicializado - VERSIÓN REPARADA');
         this.initializeAllAudioPlayers();
         this.setupGlobalEventListeners();
+        this.setupUserInteraction(); // CORRECCIÓN: Preparar interacción
+    }
+
+    // CORRECCIÓN NUEVA: Preparar interacción del usuario
+    setupUserInteraction() {
+        const enableAudio = () => {
+            this.userInteracted = true;
+            console.log('✅ Interacción de usuario detectada - Audio habilitado');
+            
+            // Reanudar todos los AudioContexts
+            this.audioContexts.forEach((audioContext, audioId) => {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        console.log(`✅ AudioContext reanudado para: ${audioId}`);
+                    }).catch(console.error);
+                }
+            });
+
+            // Remover event listeners después de la primera interacción
+            document.removeEventListener('click', enableAudio);
+            document.removeEventListener('touchstart', enableAudio);
+            document.removeEventListener('keydown', enableAudio);
+        };
+
+        document.addEventListener('click', enableAudio, { once: true });
+        document.addEventListener('touchstart', enableAudio, { once: true });
+        document.addEventListener('keydown', enableAudio, { once: true });
     }
 
     initializeAllAudioPlayers() {
@@ -144,7 +173,8 @@ class AudioPlayerSystem {
             waveform: card.querySelector('.audio-waveform'),
             waveBars: card.querySelectorAll('.wave-bar'),
             audioPlayer: card.querySelector('.audio-player-mini'),
-            isPlaying: false
+            isPlaying: false,
+            audioContext: null // CORRECCIÓN: Contexto individual por audio
         };
 
         if (!player.playBtn || !player.progressBar || !player.audioTime || !player.waveform || !player.waveBars || !player.audioPlayer) {
@@ -181,14 +211,37 @@ class AudioPlayerSystem {
             }
         };
 
-        // CORRECCIÓN: Inicialización de audio mejorada
+        // CORRECCIÓN MEJORADA: Inicialización de audio con manejo de contexto
         const initAudioAnalyser = () => {
             if (!waveSystem.initialized) {
-                waveSystem.initAnalyser(audio);
+                try {
+                    // CORRECCIÓN: Crear AudioContext solo cuando sea necesario
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) {
+                        console.warn('AudioContext no soportado');
+                        return;
+                    }
+                    
+                    const audioContext = new AudioContext();
+                    this.audioContexts.set(audioId, audioContext);
+                    
+                    // CORRECCIÓN: Solo conectar si el usuario ha interactuado
+                    if (this.userInteracted && audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                    
+                    waveSystem.initAnalyser(audio, audioContext);
+                } catch (error) {
+                    console.error('❌ Error inicializando analizador:', error);
+                }
             }
         };
 
-        const togglePlay = () => {
+        // CORRECCIÓN COMPLETA: Función togglePlay mejorada
+        const togglePlay = async (e) => {
+            if (e) e.stopPropagation();
+
+            // Si ya está reproduciendo, pausar
             if (player.isPlaying) {
                 audio.pause();
                 player.isPlaying = false;
@@ -199,7 +252,7 @@ class AudioPlayerSystem {
                 return;
             }
 
-            // Pausar cualquier audio que se esté reproduciendo
+            // CORRECCIÓN: Pausar cualquier audio previo
             if (this.currentlyPlaying && this.currentlyPlaying !== audioId) {
                 const previousPlayer = this.audioPlayers.get(this.currentlyPlaying);
                 const previousWaveSystem = this.waveSystems.get(this.currentlyPlaying);
@@ -213,83 +266,79 @@ class AudioPlayerSystem {
                 }
             }
 
-            // CORRECCIÓN: Mejor manejo de reproducción con fallbacks
-            const playAudio = () => {
-                audio.play().then(() => {
-                    player.isPlaying = true;
-                    this.currentlyPlaying = audioId;
-                    audioPlayer.classList.add('playing');
-                    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                    
-                    // Inicializar analizador después de comenzar la reproducción
-                    setTimeout(() => {
-                        initAudioAnalyser();
-                        if (waveSystem.initialized) {
-                            waveSystem.updateWaveform(waveBars);
-                        }
-                    }, 100);
-                    
-                    document.dispatchEvent(new CustomEvent('audioPlay'));
-                    
-                    if (typeof gtag !== 'undefined') {
-                        gtag('event', 'audio_play', {
-                            event_category: 'media',
-                            event_label: audioId,
-                            value: 1
-                        });
-                    }
-                    
-                }).catch(error => {
-                    console.error('Error reproduciendo audio:', error);
-                    
-                    // CORRECCIÓN: Fallback para autoplay bloqueado
-                    if (error.name === 'NotAllowedError') {
-                        playBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
-                        playBtn.style.color = '#ffa500';
-                        playBtn.title = 'Haz clic para activar el audio';
-                        
-                        // Intentar reproducir después de la interacción del usuario
-                        const userInteractionHandler = () => {
-                            audio.play().catch(e => {
-                                console.error('Error en segundo intento:', e);
-                                playBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-                                playBtn.style.color = '#ff6b6b';
-                            });
-                            document.removeEventListener('click', userInteractionHandler);
-                        };
-                        
-                        document.addEventListener('click', userInteractionHandler, { once: true });
-                    } else {
-                        playBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-                        playBtn.style.color = '#ff6b6b';
-                    }
-                    
-                    audioPlayer.classList.add('error');
-                    
-                    if (typeof gtag !== 'undefined') {
-                        gtag('event', 'audio_error', {
-                            event_category: 'media',
-                            event_label: error.message
-                        });
-                    }
-                });
-            };
+            // CORRECCIÓN MEJORADA: Manejo de reproducción con políticas de autoplay
+            try {
+                // Intentar reanudar el contexto de audio si está suspendido
+                const audioContext = this.audioContexts.get(audioId);
+                if (audioContext && audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                }
 
-            // CORRECCIÓN: Cargar audio si es necesario
-            if (audio.readyState < 3) {
-                audio.load();
-                audio.addEventListener('canplay', () => {
-                    playAudio();
-                }, { once: true });
-            } else {
-                playAudio();
+                // Reproducir audio
+                await audio.play();
+                
+                player.isPlaying = true;
+                this.currentlyPlaying = audioId;
+                audioPlayer.classList.add('playing');
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                
+                // Inicializar analizador después de comenzar la reproducción
+                setTimeout(() => {
+                    initAudioAnalyser();
+                    if (waveSystem.initialized) {
+                        waveSystem.updateWaveform(waveBars);
+                    }
+                }, 100);
+                
+                document.dispatchEvent(new CustomEvent('audioPlay'));
+                
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'audio_play', {
+                        event_category: 'media',
+                        event_label: audioId,
+                        value: 1
+                    });
+                }
+                
+            } catch (error) {
+                console.error('❌ Error reproduciendo audio:', error);
+                
+                // CORRECCIÓN MEJORADA: Manejo específico de errores de autoplay
+                if (error.name === 'NotAllowedError') {
+                    playBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+                    playBtn.style.color = '#ffa500';
+                    playBtn.title = 'Haz clic aquí primero para activar el audio';
+                    
+                    // CORRECCIÓN: Mensaje más informativo para el usuario
+                    console.log('🔊 Política de autoplay bloqueada - Esperando interacción del usuario');
+                    
+                    // CORRECCIÓN: Intentar nuevamente después de interacción
+                    const retryPlay = () => {
+                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        playBtn.style.color = '';
+                        playBtn.title = 'Reproducir';
+                        document.removeEventListener('click', retryPlay);
+                        togglePlay();
+                    };
+                    
+                    document.addEventListener('click', retryPlay, { once: true });
+                } else {
+                    playBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                    playBtn.style.color = '#ff6b6b';
+                    playBtn.title = 'Error al reproducir';
+                    audioPlayer.classList.add('error');
+                }
+                
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'audio_error', {
+                        event_category: 'media',
+                        event_label: error.message
+                    });
+                }
             }
         };
 
-        playBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            togglePlay();
-        });
+        playBtn.addEventListener('click', togglePlay);
 
         audio.addEventListener('timeupdate', updateProgress);
         
@@ -356,6 +405,12 @@ class AudioPlayerSystem {
         });
         this.waveSystems.clear();
         this.audioPlayers.clear();
+        
+        // CORRECCIÓN: Cerrar todos los AudioContexts
+        this.audioContexts.forEach(audioContext => {
+            audioContext.close().catch(console.error);
+        });
+        this.audioContexts.clear();
     }
 }
 
@@ -370,24 +425,28 @@ class InteractiveWaveSystem {
         this.isPlaying = false;
     }
 
-    initAnalyser(audioElement) {
+    // CORRECCIÓN: Recibir audioContext como parámetro
+    initAnalyser(audioElement, audioContext = null) {
         if (this.initialized) return;
         
         try {
-            // CORRECCIÓN: Mejor compatibilidad con navegadores
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) {
-                console.warn('AudioContext no soportado en este navegador');
-                return;
+            // CORRECCIÓN: Usar el audioContext proporcionado o crear uno nuevo
+            if (!audioContext) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) {
+                    console.warn('AudioContext no soportado en este navegador');
+                    return;
+                }
+                this.audioContext = new AudioContext();
+            } else {
+                this.audioContext = audioContext;
             }
-            
-            this.audioContext = new AudioContext();
             
             // CORRECCIÓN: Manejo de estado suspendido
             if (this.audioContext.state === 'suspended') {
                 this.audioContext.resume().then(() => {
-                    console.log('AudioContext reanudado');
-                });
+                    console.log('✅ AudioContext reanudado para waveform');
+                }).catch(console.error);
             }
             
             this.analyser = this.audioContext.createAnalyser();
@@ -402,7 +461,7 @@ class InteractiveWaveSystem {
             this.dataArray = new Uint8Array(bufferLength);
             
             this.initialized = true;
-            console.log('✅ Analizador de audio inicializado');
+            console.log('✅ Analizador de audio inicializado correctamente');
             
         } catch (error) {
             console.error('❌ Error inicializando el analizador de audio:', error);
@@ -686,7 +745,7 @@ class FormHandler {
         }
 
         document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('open-contact-modal') || 
+            if (e.target.classList.contains('.open-contact-modal') || 
                 e.target.closest('.open-contact-modal')) {
                 e.preventDefault();
                 this.openContactModal();
@@ -1339,7 +1398,7 @@ function fixWhiteButton() {
 
 // ===== INICIALIZACIÓN PRINCIPAL MEJORADA =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎵 ODAM - Inicializando sitio con correcciones aplicadas...');
+    console.log('🎵 ODAM - Inicializando sitio con AUDIO REPARADO...');
 
     try {
         // CORRECCIÓN: Evitar inicializaciones múltiples
@@ -1393,7 +1452,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        console.log('🎵 ODAM - Sitio completamente inicializado y corregido');
+        console.log('🎵 ODAM - Sitio completamente inicializado con AUDIO REPARADO');
     } catch (error) {
         console.error('Error durante la inicialización:', error);
     }
