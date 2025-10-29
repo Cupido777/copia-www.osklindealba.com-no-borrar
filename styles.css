@@ -1130,13 +1130,6 @@ nav a:hover::after {
   opacity: 0.6;
 }
 
-.verse-counter {
-  font-size: 0.7rem;
-  color: #b0b0b0;
-  margin-top: 8px;
-  width: 100%; /* CORRECCIÓN: Aseguramos ancho completo */
-}
-
 /* Estados de carga y error */
 #bible-verse.loading .verse-text {
   color: var(--text-muted);
