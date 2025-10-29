@@ -52,7 +52,7 @@ class InspirationVerseSystem {
 
         const verse = this.bible.getRandomVerse();
         if (verse) {
-            const verseElement = document.getElementById('inspiration-verse');
+            const verseElement = document.getElementById('bible-verse');
             if (verseElement) {
                 verseElement.innerHTML = `
                     <div class="verse-content">
@@ -81,9 +81,12 @@ class InspirationVerseSystem {
     }
 }
 
-// Inicializar el sistema cuando la página cargue
+// Inicializar el sistema cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
-    window.verseSystem = new InspirationVerseSystem();
+    // Pequeño delay para asegurar que todo esté cargado
+    setTimeout(() => {
+        window.verseSystem = new InspirationVerseSystem();
+    }, 500);
 });
 
 // También disponible globalmente para control manual
